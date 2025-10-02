@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lucignolo"
+version = "0.1.0.dev0"
+authors = [
+    { name="Marco Gabriele Fedozzi", email="marco.fedozzi@iit.it" },
+]
+description = "Simple Inverse Dynamics controller for MuJoCo"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+
+dependencies = [
+    "numpy==2.0.2",
+    "mujoco==3.3.0",
+    "scipy>=1.13.1",
+    "gymnasium==0.28.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/marcogfedozzi/Lucignolo"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src"]
