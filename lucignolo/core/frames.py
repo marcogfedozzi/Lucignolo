@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 
 from gymnasium.envs.mujoco import MujocoEnv
 
-import src.core.utils as utils
+import lucignolo.core.utils as utils
 
 from functools import partial
 from scipy.spatial.transform import Rotation as R

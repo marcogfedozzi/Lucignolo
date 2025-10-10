@@ -1,10 +1,13 @@
 import numpy as np
 
 from numpy.typing import NDArray
-from typing import List
+from typing import List, TYPE_CHECKING
 
-from fields.forcefield import XField
-from core.frames import Frame
+from lucignolo.core.frames import Frame
+
+if TYPE_CHECKING:
+    # For type checkers only; avoids runtime circular imports
+    from lucignolo.fields.base import XField
 
 
 class EEFPoint():
@@ -12,8 +15,15 @@ class EEFPoint():
         self.point = point
         self.fields = []
     
-    def add_field(self, field: XField):
-        assert isinstance(field, XField), f"object {field} shoult be a (V,F)Field, found instead {field.__class__.__name__} {field}"
+    def add_field(self, field: 'XField'):
+        # Avoid importing XField at module import time to prevent circular imports
+        try:
+            from lucignolo.fields.base import XField
+        except Exception:
+            XField = None
+
+        if XField is not None:
+            assert isinstance(field, XField), f"object {field} should be an XField, found instead {field.__class__.__name__} {field}"
         self.fields.append(field)
     
     def add_fields(self, fields: List):

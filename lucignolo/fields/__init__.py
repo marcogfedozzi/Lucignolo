@@ -33,5 +33,5 @@ from .base import XField
 
 # Re-export commonly used classes
 # Note: Users should prefer get_field() over direct instantiation
-from .implementations.force_fields import TranslationalField, OrientationField, MisalignmentField, TMField
-from .implementations.velocity_fields import ViscosityField
+from .implementations.force_fields import TranslationalField, OrientationField, MisalignmentField, TMField, FField
+from .implementations.velocity_fields import ViscosityField, VField

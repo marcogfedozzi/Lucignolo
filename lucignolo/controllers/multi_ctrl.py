@@ -3,52 +3,17 @@ import numpy as np
 import mujoco
 from gymnasium.envs.mujoco import MujocoEnv
 
-from core.eef_point import EEFPoint
-from src.core.utils import IndexGetter
-from src.controllers.jnt_ctrl import ConstraintJointController
-from src.core.utils import JointGroup
+from lucignolo.core.eef_point import EEFPoint
+from lucignolo.core.utils import IndexGetter
+from lucignolo.controllers.jnt_ctrl import ConstraintJointController
+from lucignolo.core.utils import JointGroup
 
 from typing import Dict, List
 from numpy.typing import NDArray
 from functools import cached_property
-from src.controllers.invdyn_ctrl import Controller, IDController
+from .base import Controller, NoiseController
+from .invdyn_ctrl import IDController, NoisyIDController
 
-class NoiseGenerator:
-	def __init__(self, ranges: NDArray,  noise_var: float, noise_lambda: float = 1.0) -> None:
-		self.nv = noise_var
-
-		self.stds = (ranges[:,1] - ranges[:,0]) / 6 # assume gaussian with limits = 3*std
-		self.mus = (ranges[:,1] + ranges[:,0]) / 2
-		self.prev_noise = np.zeros_like(self.mus)
-		self._lambda = noise_lambda
-	def __call__(self):
-		noise = self._lambda * (self.nv * self.stds * np.random.randn(len(self.mus)) + self.mus) + (1-self._lambda)*self.prev_noise
-		self.prev_noise = noise
-		return noise
-
-class NoisyIDController(IDController):
-
-	def __init__(self, env: MujocoEnv, eef: EEFPoint, subtree_type: str, noise_var: float, noise_lambda: float = 1.0, *args, **kwargs):
-		super().__init__(env, eef, subtree_type)
-		self.noise_gen = NoiseGenerator(self.model.actuator_ctrlrange[self._indexes['actuator_ids']], noise_var, noise_lambda)
-
-	def step(self, qact = None):
-		ctrl = super().step(qact)
-		ctrl[self._indexes['actuator_ids']] += self.noise_gen()
-		return ctrl
-
-class NoiseController(Controller):
-
-	def __init__(self, env: MujocoEnv, subtree_type: str, noise_var: float, noise_lambda: float = 1.0, *args, **kwargs):
-
-		super().__init__(env, subtree_type)
-		self.noise_gen = NoiseGenerator(self.model.actuator_ctrlrange[self._indexes['actuator_ids']], noise_var, noise_lambda)
-
-	def step(self, qact = None):
-		ctrl = np.zeros((self.model.nu), dtype=np.float64)
-		ctrl[self._indexes['actuator_ids']] += self.noise_gen()
-		return ctrl
-	
 class MultiController:
 	
 	def __init__(self, env: MujocoEnv):

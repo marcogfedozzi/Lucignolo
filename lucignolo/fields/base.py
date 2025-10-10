@@ -7,7 +7,7 @@ No concrete implementations are included here to keep the interface clean.
 
 from abc import ABC, abstractmethod
 from numpy.typing import NDArray
-from core.frames import Frame
+from lucignolo.core.frames import Frame
 
 
 class XField(ABC):

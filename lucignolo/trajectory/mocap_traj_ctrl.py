@@ -1,12 +1,12 @@
 # Control a mocap body
 
 import numpy as np
-from core.frames import iFrame, ControllableFrame, StaticFrame
-from core.timers import GeneratorTimer, DeltaTimer, cTimer, flagTimer
-import core.frames as bf
-from toys_path import MidPoint, Oscillation, ToysPath
+from lucignolo.core.frames import iFrame, ControllableFrame, StaticFrame
+from lucignolo.core.timers import GeneratorTimer, DeltaTimer, cTimer, flagTimer
+import lucignolo.core.frames as bf
+from lucignolo.trajectory.toys_path import MidPoint, Oscillation, ToysPath
 from gymnasium.envs.mujoco import MujocoEnv
-import src.core.utils as utils
+from lucignolo.core import utils
 
 
 from scipy.spatial.transform import Rotation as R

@@ -11,9 +11,9 @@ from typing import List
 
 from numpy.typing import NDArray
 
-from core.frames import Frame
+from lucignolo.core.frames import Frame
 from abc import ABC, abstractmethod 
-from fields.base import XField
+from lucignolo.fields.base import XField
 
 
 class VField(XField):

@@ -21,12 +21,11 @@ Example usage:
 
 import numpy as np
 from typing import Dict
-from functools import partial
 
-from .base import XField
-from .utils import get_proportional_func
-from .implementations.force_fields import TranslationalField, MisalignmentField, OrientationField, TMField
-from .implementations.velocity_fields import ViscosityField
+from lucignolo.fields.base import XField
+from lucignolo.fields.utils import get_proportional_func
+from lucignolo.fields.implementations.force_fields import TranslationalField, MisalignmentField, OrientationField, TMField
+from lucignolo.fields.implementations.velocity_fields import ViscosityField
 
 
 def get_field(field_type: str, params: Dict) -> XField:

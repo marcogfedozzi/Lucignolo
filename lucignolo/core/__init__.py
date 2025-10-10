@@ -9,7 +9,7 @@ This module provides fundamental building blocks used throughout the library:
 These components form the mathematical foundation for higher-level control algorithms.
 """
 
-from .frames import *
 from .utils import *  
-from .timers import *
-from .eef_point import *
+from .frames import iFrame, StaticFrame, Frame, ControllableFrame, OffsetFrame, MinOffsetFrame
+from .timers import cTimer, cRandomTimer, flagTimer, GeneratorTimer, DeltaTimer
+from .eef_point import EEFPoint

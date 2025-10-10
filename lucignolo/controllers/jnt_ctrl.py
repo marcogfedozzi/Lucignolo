@@ -14,7 +14,7 @@ The choice between them depends on your needs:
 import numpy as np
 from gymnasium.envs.mujoco import MujocoEnv
 
-from src.core.utils import IndexGetter
+from lucignolo.core.utils import IndexGetter
 
 from typing import Dict
 

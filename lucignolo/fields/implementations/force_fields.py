@@ -10,14 +10,13 @@ _all_ = ['TranslationalField', 'MisalignmentField', 'OrientationField', 'TMField
 import numpy as np
 
 from numpy.typing import NDArray
-from typing import List, Dict
 
 from functools import partial
 
-from core.frames import Frame
-from abc import ABC, abstractmethod 
+from lucignolo.core.frames import Frame
 
-from fields.base import XField
+from lucignolo.fields.base import XField
+from lucignolo.fields.utils import get_cosine_func, get_linear_func
 
 class FField(XField):
     """This class represents a vectorial field generated around a central point in SE(3).
@@ -177,125 +176,3 @@ MisalignmentField   = partial(FField, is_translational=False, is_alignment=True)
 OrientationField    = partial(FField, is_translational=False, is_alignment=False, is_orientation=True)
 
 TMField             = partial(FField, is_translational=True, is_alignment=True)
-
-def get_proportional_func(k: float = 1.0, pow: float = 1.0, s: float = 1.0, min: float = None, max: float = None, thresh: float = 1e-3) -> NDArray:
-
-    # Only add clipping if min or max are specified, otherwise save computation
-    # Note that I have to add clipping to the magnitude, before multiplying by the versor
-    if min is None and max is None:
-        magnitude = lambda d: (d/s)**pow
-    else:
-        if max is None: max = np.inf
-        if min is None: min = 0.0
-
-        magnitude = lambda d: np.clip((d/s)**pow, min, max)
-
-    def func(x: NDArray) -> NDArray:
-        d = np.linalg.norm(x)
-
-        if d < thresh:
-            return np.zeros_like(x)
-        n = x/d
-
-        return k * n * magnitude(d)
-    
-    return func
-
-get_linear_func         = partial(get_proportional_func, pow=1.0)
-get_quadratic_func      = partial(get_proportional_func, pow=2.0)
-get_cubic_func          = partial(get_proportional_func, pow=3.0)
-get_inverse_func        = partial(get_proportional_func, pow=-1.0)
-get_inverse_square_func = partial(get_proportional_func, pow=-2.0)
-
-
-def get_cosine_func(radius_in: float = 0.2, radius_out: float = 0.3) -> NDArray:
-    """Generate a decreasing cosine function that goes from 1 to 0 in the interval [radius1, radius2]."""
-
-    def func(x: NDArray) -> NDArray:
-        d = np.linalg.norm(x)
-        if d > radius_out:
-            return np.zeros_like(x)
-    
-        if d < radius_in:
-            return 1
-        
-        n = x/d
-
-        return 1/2 * (1 + np.cos(np.pi/(radius_out-radius_in) * (d-radius_in)))
-
-    return func
-
-# Pipeline:
-# generate the fields
-# create an EEF point
-# assign the fields to the EEF point
-# in the loop: for each EEF point, get the fields' effects and sum them
-# in the loop: compute the velocity values in joint space
-
-class VField(XField):
-    """This calss represents a vectorial field that is proportional to the velocity of the end effector.
-
-    It simulates viscosity or friction in the end effector's movement, and acts similarly to the Derivative
-    part in a PID controller.
-    """
-
-    def __init__(self, k: NDArray | List | float = 1.0, *args, **kwargs):
-        """
-        k: 
-        - float: same coefficient for all axes
-        - sizeof(k) == 2: [translational, rotational]
-        - sizeof(k) == 6: [vx, vy, vz, wx, wy, wx]
-        """
-
-        if isinstance(k, (int, float)):
-            self.k = np.ones(6) * k
-        elif len(k) == 2:
-            self.k = np.array([k[0], k[0], k[0], k[1], k[1], k[1]])
-        elif len(k) != 6:
-            raise ValueError("k must be a float, a list of 2 elements or a list of 6 elements.")
-        
-    def __call__(self, point: Frame, qvel: NDArray) -> NDArray:
-        """Compute the effect of the field at the specified SE(3) position."""
-
-        v = point.jac @ qvel # [6,] velocity in Cartesian space
-
-        return - self.k * v
-    
-ViscosityField = VField
-
-def get_field(func_name: str, params: Dict) -> XField:
-    """Get a field object based on the name and the parameters."""
-    field = None
-
-    if func_name == "viscosity": return partial(ViscosityField, k=params["k"])
-
-    is_repulsive = params.pop("is_repulsive", False) or 'repulsive' in func_name # in case it's already expressed
-
-    radii = params.pop("radii", np.array([0.0]))
-    align_same_k = params.pop("align_same_k", True)
-    foo = get_proportional_func(**params)
-
-    tr_func = None
-    al_func = None
-
-    if "translation"  in func_name: 
-        field = TranslationalField
-        tr_func = foo
-    elif "misalignment" in func_name: 
-        field = MisalignmentField
-        al_func = foo
-    elif "orientation"  in func_name:
-        field = OrientationField
-        al_func = foo
-    elif "tm" in func_name: 
-        field = TMField
-        tr_func = foo
-        al_func = foo
-    else:
-        raise ValueError("The field function name is not valid.")
-
-
-
-    field = partial(field, tr_func=tr_func, al_func=al_func, radii=radii, is_repulsive=is_repulsive, align_same_k=align_same_k)
-
-    return field
