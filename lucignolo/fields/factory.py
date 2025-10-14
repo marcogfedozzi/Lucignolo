@@ -22,13 +22,14 @@ Example usage:
 import numpy as np
 from typing import Dict
 
+from lucignolo.core.frames import iFrame
 from lucignolo.fields.base import XField
 from lucignolo.fields.utils import get_proportional_func
 from lucignolo.fields.implementations.force_fields import TranslationalField, MisalignmentField, OrientationField, TMField
 from lucignolo.fields.implementations.velocity_fields import ViscosityField
+from typing import Optional
 
-
-def get_field(field_type: str, params: Dict) -> XField:
+def get_field(center: Optional[iFrame], field_type: str, params: Dict) -> XField:
     """
     Factory function to create field instances based on type and parameters.
     
@@ -36,6 +37,8 @@ def get_field(field_type: str, params: Dict) -> XField:
     parameter processing and returns configured field instances.
     
     Args:
+        center: the origin of the field (e.g. the target point)
+
         field_type: String identifying the field type. Supported types:
             - "translation": Translational attractor/repulsor field
             - "misalignment": Orientation alignment field  
@@ -47,7 +50,6 @@ def get_field(field_type: str, params: Dict) -> XField:
             - etc. (prepending "repulsive_" makes any field repulsive)
             
         params: Dictionary of field parameters. Common parameters:
-            - center: Frame object for the field center (force fields only)
             - k: Field strength/gain
             - pow: Power law exponent
             - s: Distance scaling factor  
@@ -64,22 +66,28 @@ def get_field(field_type: str, params: Dict) -> XField:
         
     Example:
         # Attractive field toward target
-        field = get_field("translation", {
-            "center": target_frame,
-            "k": 5.0,
-            "pow": 1.0,
-            "s": 0.1
-        })
+        field = get_field(
+            target_frame,
+            "translation", 
+            {
+                "k": 5.0,
+                "pow": 1.0,
+                "s": 0.1
+            }
+        )
         
         # Repulsive field avoiding obstacle  
-        field = get_field("repulsive_translation", {
-            "center": obstacle_frame,
-            "k": 10.0,
-            "pow": 2.0
-        })
+        field = get_field(
+            obstacle_frame,
+            "repulsive_translation", 
+            {
+                "k": 10.0,
+                "pow": 2.0
+            }
+        )
         
         # Viscosity damping
-        field = get_field("viscosity", {"k": 2.0})
+        field = get_field(None, "viscosity", {"k": 2.0})
     """
     
     # Handle viscosity field separately (velocity-based, different interface)
@@ -122,10 +130,8 @@ def get_field(field_type: str, params: Dict) -> XField:
     
     # Create and return field instance
     return field_class(
-        center=params["center"],
-        is_repulsive=is_repulsive,
-        tr_func=tr_func,
-        al_func=al_func, 
-        radii=radii,
+        center, 
+        tr_func=tr_func, al_func=al_func, 
+        radii=radii, is_repulsive=is_repulsive, 
         align_same_k=align_same_k
     )

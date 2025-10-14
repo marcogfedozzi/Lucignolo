@@ -103,7 +103,7 @@ class StaticFrame(iFrame):
 		setattr(self, '_jac', value)
 
 class Frame(iFrame):
-	def __init__(self, env: MujocoEnv, name: str, ftype: str, heading: NDArray = np.asarray([1, 0, 0])):
+	def __init__(self, env: MujocoEnv, name: str, ftype: str, heading: NDArray = np.asarray([0, 0, 1])):
 		self.env = env
 		self.name = name
 		self.ftype = ftype
@@ -185,7 +185,7 @@ class Frame(iFrame):
 		return StaticFrame(xpos=self.xpos, xmat=self.xmat, xquat=self.xquat, jac=self.jac)
 
 class ControllableFrame(Frame):
-	def __init__(self, env: MujocoEnv, name: str, heading: NDArray = np.asarray([1, 0, 0])):
+	def __init__(self, env: MujocoEnv, name: str, heading: NDArray = np.asarray([0, 0, 1])):
 		self.body_id = env.model.body(name).id
 		self.mocap_id = env.model.body_mocapid[self.body_id]
 
@@ -221,7 +221,7 @@ class ControllableFrame(Frame):
 class OffsetFrame(Frame):
 	def __init__(self, env: MujocoEnv, name: str, ftype: str, offset: NDArray, 
 			  offset_in_world_coords: bool = False, keep_world_z: bool = False,
-			  heading: NDArray = np.asarray([1, 0, 0])):
+			  heading: NDArray = np.asarray([0, 0, 1])):
 		super().__init__(env, name, ftype, heading)
 		self.offset = offset
 		self.owc = offset_in_world_coords
