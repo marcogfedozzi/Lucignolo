@@ -13,9 +13,9 @@ Key concepts:
 
 References:
 [1] Khatib, Oussama. "A unified approach for motion and force control of robot manipulators: 
-    The operational space formulation." IEEE Journal on Robotics and Automation 3.1 (1987): 43-53.
+	The operational space formulation." IEEE Journal on Robotics and Automation 3.1 (1987): 43-53.
 [2] Mistry, Michael, and Ludovic Righetti. "Operational space control of constrained and 
-    underactuated systems." (2012).
+	underactuated systems." (2012).
 """
 
 from gymnasium.envs.mujoco import MujocoEnv
@@ -23,6 +23,7 @@ from gymnasium.envs.mujoco import MujocoEnv
 from lucignolo.core.utils import IndexGetter
 from numpy.typing import NDArray
 import numpy as np
+from typing import Optional
 
 def crux(J, M_x, M_inv):
 	"""
@@ -52,13 +53,26 @@ def crux(J, M_x, M_inv):
 		
 	References:
 		[1] Khatib, Oussama. "A unified approach for motion and force control of robot manipulators: 
-		    The operational space formulation." IEEE Journal on Robotics and Automation 3.1 (1987): 43-53.
+			The operational space formulation." IEEE Journal on Robotics and Automation 3.1 (1987): 43-53.
 		[2] Mistry, Michael, and Ludovic Righetti. "Operational space control of constrained and 
-		    underactuated systems." (2012).
+			underactuated systems." (2012).
 	"""
 	return M_x @ J @ M_inv
 
 dynamically_consistent_generalized_inverse = crux
+
+
+def get_actuators(env: MujocoEnv, actuators_prefix: Optional[str] = None):
+
+	actuators = []
+
+	for i in range(env.model.nu):
+		actuator_name = env.model.actuator(i).name
+		if actuators_prefix is None or actuator_name.startswith(actuators_prefix):
+			actuators.append(i)
+
+	return np.asarray(actuators)
+
 
 class Controller:
 	"""
@@ -76,22 +90,27 @@ class Controller:
 		_indexes: Joint/DOF indices for the controlled subtree
 	"""
 	
-	def __init__(self, env: MujocoEnv, subtree_type: str, *args, **kwargs):
+	def __init__(self, env: MujocoEnv, subtree_type: str, actuators_prefix: Optional[str] = None, *args, **kwargs):
 		"""
 		Initialize base controller.
 		
 		Args:
 			env: MuJoCo environment instance
 			subtree_type: String identifying the kinematic subtree (e.g., 'left_arm', 'torso')
+			actuators_prefix: Optional prefix to filter actuators by name
 		"""
 
 		self.data = env.data
 		self.model = env.model
 
-		self.actuators = env.mimo_actuators
+		self.actuators = get_actuators(env, actuators_prefix)
 
 		self.subtree_type = subtree_type
 		self._indexes = IndexGetter(self.model)(subtree_type=self.subtree_type)
+
+		print("@@@@@")
+		print(self._indexes)
+		print("@@@@@")
 
 	def step(self, qact = None):
 		"""Compute control signals for one time step. Must be implemented by subclasses."""

@@ -16,9 +16,11 @@ from gymnasium.envs.mujoco import MujocoEnv
 
 from lucignolo.core.utils import IndexGetter
 
-from typing import Dict
+from typing import Dict, Optional
 
 from numpy.typing import NDArray
+from .base import get_actuators
+
 
 class JointController:
 	"""
@@ -54,12 +56,12 @@ class JointController:
 		'thresh': 1e-3
 	}
 
-	def __init__(self, env: MujocoEnv, target_posture: Dict[str, float], control_params: Dict[str, Dict[str, float]], *args, **kwargs):
+	def __init__(self, env: MujocoEnv, target_posture: Dict[str, float], control_params: Dict[str, Dict[str, float]], actuators_prefix: Optional[str] = None, *args, **kwargs):
 
 		self.data = env.data
 		self.model = env.model
 
-		self.actuators = env.mimo_actuators
+		self.actuators = get_actuators(env, actuators_prefix)
 
 		self.target_posture = target_posture
 		self.inv_map = None
@@ -255,13 +257,13 @@ class ConstraintJointController(JointController):
 	def _activate_constraints(self):
 		"""Activate the equality constraints."""
 		
-		self.model.eq_active[self.eq_ids] = 1
+		self.data.eq_active[self.eq_ids] = 1
 
 
 	def _deactivate_constraints(self):
 		"""Activate the equality constraints."""
 		
-		self.model.eq_active[self.eq_ids] = 0
+		self.data.eq_active[self.eq_ids] = 0
 
 	def _switch_on(self):
 		self._activate_constraints()

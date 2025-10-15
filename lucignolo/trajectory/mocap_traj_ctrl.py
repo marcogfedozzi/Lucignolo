@@ -192,11 +192,11 @@ class MocapControl:
             self._next_target()
 
     def _activate_constraint(self, *args, **kwargs):
-        self.env.model.eq_active[self.eq_id] = 1
+        self.env.data.eq_active[self.eq_id] = 1
         return True
 
     def _deactivate_constraint(self, *args, **kwargs):
-        self.env.model.eq_active[self.eq_id] = 0
+        self.env.data.eq_active[self.eq_id] = 0
         self.ctrl_obj_id = None
         self.ctrl_obj_geoms_idrange = None
 

@@ -5,8 +5,8 @@ import mujoco
 from gymnasium.envs.mujoco import MujocoEnv
 
 from lucignolo.core.eef_point import EEFPoint
-from lucignolo.core.utils import IndexGetter
 from .base import Controller, crux, NoiseGenerator
+from typing import Optional
 
 class IDController(Controller):
 	"""
@@ -46,7 +46,7 @@ class IDController(Controller):
 	- Humanoid robot control with underactuated floating base
 	"""
 
-	def __init__(self, env: MujocoEnv, eef: EEFPoint, subtree_type: str, *args, **kwargs):
+	def __init__(self, env: MujocoEnv, eef: EEFPoint, subtree_type: str, actuators_prefix: Optional[str] = None, *args, **kwargs):
 		"""
 		Initialize the inverse dynamics controller.
 		
@@ -56,8 +56,12 @@ class IDController(Controller):
 			subtree_type: String identifying the kinematic subtree being controlled
 		"""
 
-		super().__init__(env, subtree_type)
-		
+		super().__init__(env, subtree_type, actuators_prefix)
+
+		print("#############")
+		print(self._indexes)
+		print("#############")
+
 		# Task definition
 		self.eef = eef
 		self.err = np.empty((0))           # Task error vector

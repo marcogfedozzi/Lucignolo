@@ -8,21 +8,23 @@ from lucignolo.core.utils import IndexGetter
 from lucignolo.controllers.jnt_ctrl import ConstraintJointController
 from lucignolo.core.utils import JointGroup
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 from numpy.typing import NDArray
 from functools import cached_property
-from .base import Controller, NoiseController
+from .base import Controller, NoiseController, get_actuators
 from .invdyn_ctrl import IDController, NoisyIDController
 
 class MultiController:
 	
-	def __init__(self, env: MujocoEnv):
+	def __init__(self, env: MujocoEnv, actuators_prefix: Optional[str] = None):
 		self.controllers: List[Controller] = []
 		self.env = env
 		self._indexes = IndexGetter(self.env.model)(subtree_type='anything', check_constraints=False) # get all the actuable dofs, even if constrained
 
 		self.gears = np.ones(self.env.model.nv) # NOTE: consider the gear of unactuated joints as 1
-		self.gears[self._indexes['dof_ids']] = self.env.model.actuator_gear[self.env.mimo_actuators, 0]
+
+		self.actuators = get_actuators(env, actuators_prefix)
+		self.gears[self._indexes['dof_ids']] = self.env.model.actuator_gear[self.actuators, 0]
 
 		self.ranges = self.env.model.actuator_ctrlrange[self._indexes['actuator_ids']]
 

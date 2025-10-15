@@ -2,6 +2,8 @@ __all__ = ['IndexGetter', 'quat_wlast', 'quat_wlast', 'get_geoms_for_body_tree']
 
 import numpy as np
 import mujoco
+from gymnasium.envs.mujoco import MujocoEnv
+
 
 from typing import TypedDict
 from numpy.typing import NDArray
@@ -157,7 +159,7 @@ class IndexGetter:
 	#	"anything", "nothing", 
 	#]
 	
-	def __init__(self, model: mujoco.MjModel, subtree_types: List[str] = []):
+	def __init__(self, env: MujocoEnv, subtree_types: List[str] = []):
 		self.model = model
 
 		self.SUBTREE_TYPES = subtree_types
@@ -172,7 +174,7 @@ class IndexGetter:
 
 		if subtree_type is not None:
 			#assert subtree_type in self.SUBTREE_TYPES, f"Invalid subtree type: {subtree_type}, expected one of {self.SUBTREE_TYPES}"
-			if not (subtree_type in self.SUBTREE_TYPES):
+			if len(self.SUBTREE_TYPES) > 0 and not (subtree_type in self.SUBTREE_TYPES):
 				# Silently ignore the wrong subtree type
 				return None
 			
@@ -200,7 +202,7 @@ class IndexGetter:
 
 			constraint_id = self.model.equality(joint_name).id # To check if the joint is constrained (e. fixing the initial position)
 			
-			if _filter(joint_name) and not (check_constraints and self.model.eq_active[constraint_id]):
+			if _filter(joint_name) and not (check_constraints and self.data.eq_active[constraint_id]):
 				joint_names.append(joint_name)
 				joint_ids.append(joint_id)
 
