@@ -5,7 +5,7 @@ import mujoco
 from gymnasium.envs.mujoco import MujocoEnv
 
 
-from typing import TypedDict
+from typing import TypedDict, Optional
 from numpy.typing import NDArray
 from typing import List
 
@@ -159,8 +159,17 @@ class IndexGetter:
 	#	"anything", "nothing", 
 	#]
 	
-	def __init__(self, env: MujocoEnv, subtree_types: List[str] = []):
-		self.model = model
+	def __init__(self, env: Optional[MujocoEnv] = None, subtree_types: List[str] = [], model: mujoco.MjModel = None, data: mujoco.MjData = None):
+		
+		if env is not None:
+			self.model = env.model
+			self.data = env.data
+		else:
+			assert model is not None and data is not None, \
+				"If an environment is not specified, both a model and a data structure must be passed."
+			
+			self.model = model
+			self.data = data
 
 		self.SUBTREE_TYPES = subtree_types
 

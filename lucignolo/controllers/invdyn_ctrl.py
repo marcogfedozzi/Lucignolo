@@ -58,10 +58,6 @@ class IDController(Controller):
 
 		super().__init__(env, subtree_type, actuators_prefix)
 
-		print("#############")
-		print(self._indexes)
-		print("#############")
-
 		# Task definition
 		self.eef = eef
 		self.err = np.empty((0))           # Task error vector

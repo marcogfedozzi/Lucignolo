@@ -92,7 +92,7 @@ class JointController:
 
 		self.target_posture = target_posture
 
-		self._indexes = IndexGetter(self.model)(joint_list=target_posture.keys())
+		self._indexes = IndexGetter(model=self.model,data=self.data)(joint_list=target_posture.keys())
 		self.tgt_pose = np.empty(self._indexes['dof_ids'].shape[0], dtype=np.float64)
 		self.inv_map = {}
 
@@ -209,7 +209,7 @@ class ConstraintJointController(JointController):
 		self.ctrl_params[:] = self.DEFAULT_CTRL_PARAMS
 
 		for key in params.keys():
-			_idxs = IndexGetter(self.model)(subtree_type=key)
+			_idxs = IndexGetter(model=self.model,data=self.data)(subtree_type=key)
 			if _idxs is None: # deal with potentially extra parameters
 				continue
 

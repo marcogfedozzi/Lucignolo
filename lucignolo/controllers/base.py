@@ -106,11 +106,7 @@ class Controller:
 		self.actuators = get_actuators(env, actuators_prefix)
 
 		self.subtree_type = subtree_type
-		self._indexes = IndexGetter(self.model)(subtree_type=self.subtree_type)
-
-		print("@@@@@")
-		print(self._indexes)
-		print("@@@@@")
+		self._indexes = IndexGetter(env)(subtree_type=self.subtree_type)
 
 	def step(self, qact = None):
 		"""Compute control signals for one time step. Must be implemented by subclasses."""

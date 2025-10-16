@@ -19,7 +19,7 @@ class MultiController:
 	def __init__(self, env: MujocoEnv, actuators_prefix: Optional[str] = None):
 		self.controllers: List[Controller] = []
 		self.env = env
-		self._indexes = IndexGetter(self.env.model)(subtree_type='anything', check_constraints=False) # get all the actuable dofs, even if constrained
+		self._indexes = IndexGetter(self.env)(subtree_type='anything', check_constraints=False) # get all the actuable dofs, even if constrained
 
 		self.gears = np.ones(self.env.model.nv) # NOTE: consider the gear of unactuated joints as 1
 
