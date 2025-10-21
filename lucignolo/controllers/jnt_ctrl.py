@@ -12,17 +12,19 @@ The choice between them depends on your needs:
 """
 
 import numpy as np
+import mujoco
 from gymnasium.envs.mujoco import MujocoEnv
+import gymnasium as gym
 
 from lucignolo.core.utils import IndexGetter
 
 from typing import Dict, Optional
 
 from numpy.typing import NDArray
-from .base import get_actuators
+from .base import get_actuators, _iController
 
 
-class JointController:
+class JointController(_iController):
 	"""
 	A PD-like controller in joint space that steers towards preferred joint angles.
 	
@@ -56,10 +58,9 @@ class JointController:
 		'thresh': 1e-3
 	}
 
-	def __init__(self, env: MujocoEnv, target_posture: Dict[str, float], control_params: Dict[str, Dict[str, float]], actuators_prefix: Optional[str] = None, *args, **kwargs):
+	def __init__(self, env: gym.Wrapper, target_posture: Dict[str, float], control_params: Dict[str, Dict[str, float]], actuators_prefix: Optional[str] = None, model: mujoco.MjModel = None, data: mujoco.MjData = None, *args, **kwargs):
 
-		self.data = env.data
-		self.model = env.model
+		super().__init__(env=env, model=model, data=data, *args, **kwargs)
 
 		self.actuators = get_actuators(env, actuators_prefix)
 
@@ -188,8 +189,8 @@ class ConstraintJointController(JointController):
 	
 	DEFAULT_CTRL_PARAMS = [0.001, 0.01, 0.99, 0.999, 10] # Almost inactive
 
-	def __init__(self, env: MujocoEnv, target_posture: Dict[str, float], control_params: Dict[str, Dict[str, float]], *args, **kwargs):
-		super().__init__(env, target_posture, control_params, *args, **kwargs)
+	def __init__(self, env: gym.Wrapper, target_posture: Dict[str, float], control_params: Dict[str, Dict[str, float]], model: mujoco.MjModel = None, data: mujoco.MjData = None, *args, **kwargs):
+		super().__init__(env, target_posture, control_params, model=model, data=data, *args, **kwargs)
 
 		self.step_foo = self._switch_on
 

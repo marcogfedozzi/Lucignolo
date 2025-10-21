@@ -6,6 +6,7 @@ import mujoco
 from numpy.typing import NDArray
 
 from gymnasium.envs.mujoco import MujocoEnv
+import gymnasium as gym
 
 import lucignolo.core.utils as utils
 
@@ -13,6 +14,7 @@ from functools import partial
 from scipy.spatial.transform import Rotation as R
 
 from abc import ABC
+from typing import Optional
 
 class iFrame(ABC):
 	
@@ -39,6 +41,8 @@ class iFrame(ABC):
 
 	@jac.setter
 	def jac(self, value: NDArray): pass
+
+
 
 class StaticFrame(iFrame):
 	
@@ -103,13 +107,24 @@ class StaticFrame(iFrame):
 		setattr(self, '_jac', value)
 
 class Frame(iFrame):
-	def __init__(self, env: MujocoEnv, name: str, ftype: str, heading: NDArray = np.asarray([0, 0, 1])):
-		self.env = env
+	def __init__(self, env: Optional[gym.Env] = None, name: str = "", ftype: str = "body", heading: NDArray = np.asarray([0, 0, 1]), model: 
+			  mujoco.MjModel = None, data: mujoco.MjData = None):
+
+		if env is not None:
+			self.model = env.get_wrapper_attr('model')
+			self.data = env.get_wrapper_attr('data')
+		else:
+			assert model is not None and data is not None, \
+				"If an environment is not specified, both a model and a data structure must be passed."
+			
+			self.model = model
+			self.data = data
+		
 		self.name = name
 		self.ftype = ftype
 		self.k = heading
 		self._get_xpos, self._get_xmat, self._get_xquat, self._get_jac = self.frame_getter()
-		self._jac = np.empty((6,self.env.model.nv), dtype=np.float64)
+		self._jac = np.empty((6,self.model.nv), dtype=np.float64)
 
 		self.is_static = True
 	
@@ -150,29 +165,29 @@ class Frame(iFrame):
 		ftype = self.ftype
 
 		if ftype == 'site':
-			_get_xpos  = lambda name : env.data.site(name).xpos
-			_get_xmat  = lambda name : env.data.site(name).xmat
-			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(env.data.site(name).xmat.reshape(3,3)).as_quat())
-			_get_jac   = partial(mujoco.mj_jacSite,  m=env.model, d=env.data, site=int(env.model.site(self.name).id))
+			_get_xpos  = lambda name : self.data.site(name).xpos
+			_get_xmat  = lambda name : self.data.site(name).xmat
+			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(self.data.site(name).xmat.reshape(3,3)).as_quat())
+			_get_jac   = partial(mujoco.mj_jacSite,  m=env.model, d=self.data, site=int(env.model.site(self.name).id))
 		elif ftype == 'body':
-			_get_xpos  = lambda name : env.data.body(name).xpos
-			_get_xmat  = lambda name : env.data.body(name).xmat
-			_get_xquat = lambda name : env.data.body(name).xquat
-			_get_jac   = partial(mujoco.mj_jacBody, m=env.model, d=env.data, body=int(env.model.body(self.name).id))
+			_get_xpos  = lambda name : self.data.body(name).xpos
+			_get_xmat  = lambda name : self.data.body(name).xmat
+			_get_xquat = lambda name : self.data.body(name).xquat
+			_get_jac   = partial(mujoco.mj_jacBody, m=env.model, d=self.data, body=int(env.model.body(self.name).id))
 		elif ftype == 'ibody':
-			_get_xpos  = lambda name : env.data.body(name).xipos
-			_get_xmat  = lambda name : env.data.body(name).ximat
-			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(env.data.body(name).ximat.reshape(3,3)).as_quat())
-			_get_jac   = partial(mujoco.mj_jacBodyCom, m=env.model, d=env.data, body=int(env.model.body(self.name).id))
+			_get_xpos  = lambda name : self.data.body(name).xipos
+			_get_xmat  = lambda name : self.data.body(name).ximat
+			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(self.data.body(name).ximat.reshape(3,3)).as_quat())
+			_get_jac   = partial(mujoco.mj_jacBodyCom, m=env.model, d=self.data, body=int(env.model.body(self.name).id))
 		elif ftype == 'geom':
-			_get_xpos  = lambda name : env.data.geom(name).xpos
-			_get_xmat  = lambda name : env.data.geom(name).xmat
-			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(env.data.geom(name).xmat.reshape(3,3)).as_quat())
-			_get_jac   = partial(mujoco.mj_jacGeom, m=env.model, d=env.data, geom=int(env.model.geom(self.name).id))
+			_get_xpos  = lambda name : self.data.geom(name).xpos
+			_get_xmat  = lambda name : self.data.geom(name).xmat
+			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(self.data.geom(name).xmat.reshape(3,3)).as_quat())
+			_get_jac   = partial(mujoco.mj_jacGeom, m=env.model, d=self.data, geom=int(env.model.geom(self.name).id))
 		elif ftype == 'worldbody':
-			_get_xpos  = lambda name : env.data.body(name).xpos
-			_get_xmat  = lambda name : env.data.body(name).xmat
-			_get_xquat = lambda name : env.data.body(name).xquat
+			_get_xpos  = lambda name : self.data.body(name).xpos
+			_get_xmat  = lambda name : self.data.body(name).xmat
+			_get_xquat = lambda name : self.data.body(name).xquat
 			_get_jac   = lambda *args, **kwargs: None # TODO: check if this works
 		
 
@@ -196,27 +211,27 @@ class ControllableFrame(Frame):
 
 	@property
 	def xpos(self) -> NDArray:
-		return self.env.data.xpos[self.body_id]
+		return self.data.xpos[self.body_id]
 
 	@xpos.setter
 	def xpos(self, xpos: NDArray):
-		self.env.data.mocap_pos[self.mocap_id] = xpos
+		self.data.mocap_pos[self.mocap_id] = xpos
 
 	@property
 	def xmat(self) -> NDArray:
-		return self.env.data.xmat[self.body_id].reshape(3,3)
+		return self.data.xmat[self.body_id].reshape(3,3)
 	
 	@xmat.setter
 	def xmat(self, xmat: NDArray):
-		self.env.data.mocap_quat[self.mocap_id] = utils.quat_wfirst(R.from_matrix(xmat.reshape(3,3)).as_quat())
+		self.data.mocap_quat[self.mocap_id] = utils.quat_wfirst(R.from_matrix(xmat.reshape(3,3)).as_quat())
 	
 	@property
 	def xquat(self) -> NDArray:
-		return self.env.data.mocap_quat[self.mocap_id]
+		return self.data.mocap_quat[self.mocap_id]
 	
 	@xquat.setter
 	def xquat(self, xquat: NDArray):
-		self.env.data.mocap_quat[self.mocap_id] = xquat
+		self.data.mocap_quat[self.mocap_id] = xquat
 
 class OffsetFrame(Frame):
 	def __init__(self, env: MujocoEnv, name: str, ftype: str, offset: NDArray, 

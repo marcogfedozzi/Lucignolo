@@ -3,6 +3,7 @@ __all__ = ['IndexGetter', 'quat_wlast', 'quat_wlast', 'get_geoms_for_body_tree']
 import numpy as np
 import mujoco
 from gymnasium.envs.mujoco import MujocoEnv
+import gymnasium as gym
 
 
 from typing import TypedDict, Optional
@@ -159,11 +160,11 @@ class IndexGetter:
 	#	"anything", "nothing", 
 	#]
 	
-	def __init__(self, env: Optional[MujocoEnv] = None, subtree_types: List[str] = [], model: mujoco.MjModel = None, data: mujoco.MjData = None):
+	def __init__(self, env: Optional[gym.Env] = None, subtree_types: List[str] = [], model: mujoco.MjModel = None, data: mujoco.MjData = None):
 		
 		if env is not None:
-			self.model = env.model
-			self.data = env.data
+			self.model = env.get_wrapper_attr('model')
+			self.data = env.get_wrapper_attr('data')
 		else:
 			assert model is not None and data is not None, \
 				"If an environment is not specified, both a model and a data structure must be passed."

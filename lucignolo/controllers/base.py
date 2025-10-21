@@ -24,6 +24,8 @@ from lucignolo.core.utils import IndexGetter
 from numpy.typing import NDArray
 import numpy as np
 from typing import Optional
+import gymnasium as gym
+import mujoco
 
 def crux(J, M_x, M_inv):
 	"""
@@ -62,19 +64,34 @@ def crux(J, M_x, M_inv):
 dynamically_consistent_generalized_inverse = crux
 
 
-def get_actuators(env: MujocoEnv, actuators_prefix: Optional[str] = None):
+def get_actuators(env: gym.Wrapper, actuators_prefix: Optional[str] = None):
 
 	actuators = []
 
-	for i in range(env.model.nu):
-		actuator_name = env.model.actuator(i).name
+	model = env.get_wrapper_attr("model")
+
+	for i in range(model.nu):
+		actuator_name = model.actuator(i).name
 		if actuators_prefix is None or actuator_name.startswith(actuators_prefix):
 			actuators.append(i)
 
 	return np.asarray(actuators)
 
+class _iController:
+	def __init__(self, env: Optional[gym.Env] = None, model: mujoco.MjModel = None, data: mujoco.MjData = None, *args, **kwargs):
 
-class Controller:
+		if env is not None:
+			self.model = env.get_wrapper_attr('model')
+			self.data = env.get_wrapper_attr('data')
+		else:
+			assert model is not None and data is not None, \
+				"If an environment is not specified, both a model and a data structure must be passed."
+			
+			self.model = model
+			self.data = data
+
+
+class Controller(_iController):
 	"""
 	Base class for inverse dynamics controllers.
 	
@@ -89,8 +106,8 @@ class Controller:
 		subtree_type: Type of kinematic subtree being controlled
 		_indexes: Joint/DOF indices for the controlled subtree
 	"""
-	
-	def __init__(self, env: MujocoEnv, subtree_type: str, actuators_prefix: Optional[str] = None, *args, **kwargs):
+
+	def __init__(self, env: Optional[gym.Env] = None, subtree_type: str = "", actuators_prefix: Optional[str] = None, model: mujoco.MjModel = None, data: mujoco.MjData = None, *args, **kwargs):
 		"""
 		Initialize base controller.
 		
@@ -99,9 +116,8 @@ class Controller:
 			subtree_type: String identifying the kinematic subtree (e.g., 'left_arm', 'torso')
 			actuators_prefix: Optional prefix to filter actuators by name
 		"""
+		super().__init__(env=env, model=model, data=data)
 
-		self.data = env.data
-		self.model = env.model
 
 		self.actuators = get_actuators(env, actuators_prefix)
 

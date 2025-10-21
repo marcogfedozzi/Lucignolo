@@ -3,6 +3,7 @@ import numpy as np
 
 import mujoco
 from gymnasium.envs.mujoco import MujocoEnv
+import gymnasium as gym
 
 from lucignolo.core.eef_point import EEFPoint
 from .base import Controller, crux, NoiseGenerator
@@ -46,7 +47,7 @@ class IDController(Controller):
 	- Humanoid robot control with underactuated floating base
 	"""
 
-	def __init__(self, env: MujocoEnv, eef: EEFPoint, subtree_type: str, actuators_prefix: Optional[str] = None, *args, **kwargs):
+	def __init__(self, env: gym.Wrapper, eef: EEFPoint, subtree_type: str, actuators_prefix: Optional[str] = None, model: mujoco.MjModel = None, data: mujoco.MjData = None, *args, **kwargs):
 		"""
 		Initialize the inverse dynamics controller.
 		
@@ -56,7 +57,7 @@ class IDController(Controller):
 			subtree_type: String identifying the kinematic subtree being controlled
 		"""
 
-		super().__init__(env, subtree_type, actuators_prefix)
+		super().__init__(env, subtree_type, actuators_prefix, model=model, data=data, *args, **kwargs)
 
 		# Task definition
 		self.eef = eef
@@ -238,8 +239,8 @@ class IDController(Controller):
 	
 class NoisyIDController(IDController):
 
-	def __init__(self, env: MujocoEnv, eef: EEFPoint, subtree_type: str, noise_var: float, noise_lambda: float = 1.0, *args, **kwargs):
-		super().__init__(env, eef, subtree_type)
+	def __init__(self, env: gym.Wrapper, eef: EEFPoint, subtree_type: str, noise_var: float, noise_lambda: float = 1.0, model: mujoco.MjModel = None, data: mujoco.MjData = None, *args, **kwargs):
+		super().__init__(env, eef, subtree_type, model=model, data=data, *args, **kwargs)
 		self.noise_gen = NoiseGenerator(self.model.actuator_ctrlrange[self._indexes['actuator_ids']], noise_var, noise_lambda)
 
 	def step(self, qact = None):

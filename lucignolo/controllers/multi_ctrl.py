@@ -2,6 +2,7 @@ import numpy as np
 
 import mujoco
 from gymnasium.envs.mujoco import MujocoEnv
+import gymnasium as gym
 
 from lucignolo.core.eef_point import EEFPoint
 from lucignolo.core.utils import IndexGetter
@@ -11,22 +12,25 @@ from lucignolo.core.utils import JointGroup
 from typing import Dict, List, Optional
 from numpy.typing import NDArray
 from functools import cached_property
-from .base import Controller, NoiseController, get_actuators
+from .base import Controller, NoiseController, get_actuators, _iController
 from .invdyn_ctrl import IDController, NoisyIDController
 
-class MultiController:
+class MultiController(_iController):
 	
-	def __init__(self, env: MujocoEnv, actuators_prefix: Optional[str] = None):
-		self.controllers: List[Controller] = []
-		self.env = env
-		self._indexes = IndexGetter(self.env)(subtree_type='anything', check_constraints=False) # get all the actuable dofs, even if constrained
+	def __init__(self, env: gym.Env, actuators_prefix: Optional[str] = None, model: mujoco.MjModel = None, data: mujoco.MjData = None):
 
-		self.gears = np.ones(self.env.model.nv) # NOTE: consider the gear of unactuated joints as 1
+		super().__init__(env=env, model=model, data=data)
+
+		self.controllers: List[Controller] = []
+		
+		self._indexes = IndexGetter(env)(subtree_type='anything', check_constraints=False) # get all the actuable dofs, even if constrained
+
+		self.gears = np.ones(self.model.nv) # NOTE: consider the gear of unactuated joints as 1
 
 		self.actuators = get_actuators(env, actuators_prefix)
-		self.gears[self._indexes['dof_ids']] = self.env.model.actuator_gear[self.actuators, 0]
+		self.gears[self._indexes['dof_ids']] = self.model.actuator_gear[self.actuators, 0]
 
-		self.ranges = self.env.model.actuator_ctrlrange[self._indexes['actuator_ids']]
+		self.ranges = self.model.actuator_ctrlrange[self._indexes['actuator_ids']]
 
 	def add_controller(self, subtree_type, frame=None, fields=None, noise_var:float=0, noise_lambda=1.0, controller_kwargs: Dict = {}):
 
@@ -41,11 +45,11 @@ class MultiController:
 			
 			CType = NoisyIDController if noise_var > 0 else IDController
 
-		controller = CType(env=self.env, subtree_type=subtree_type, eef=eef, noise_var=noise_var, noise_lambda=noise_lambda)
+		controller = CType(model=self.model, data=self.data, subtree_type=subtree_type, eef=eef, noise_var=noise_var, noise_lambda=noise_lambda)
 		self.controllers.append(controller)
 
 	def add_joint_controller(self, target_posture: Dict[str, float], control_params: Dict = {}):
-		controller = ConstraintJointController(self.env, target_posture=target_posture, control_params=control_params)
+		controller = ConstraintJointController(model=self.model, data=self.data, target_posture=target_posture, control_params=control_params)
 		self.controllers.append(controller)
 
 	def step(self):
