@@ -8,7 +8,7 @@ import gymnasium as gym
 
 from typing import TypedDict, Optional
 from numpy.typing import NDArray
-from typing import List
+from typing import List, Tuple
 
 from functools import partial
 
@@ -37,6 +37,24 @@ def median_distanced(x: NDArray, point: NDArray) -> float:
 
   dists = np.linalg.norm(x - point, axis=1)
   return x[argmedian(dists)]
+
+##############
+
+### Gymnasium ###
+
+def get_model_data(env: Optional[gym.Env] = None, 
+				   model: Optional[mujoco.MjModel] = None, data: Optional[mujoco.MjData] = None) -> Tuple[mujoco.MjModel, mujoco.MjData]:
+	
+	"""Compatibility function to ease passing from gymnsium 0.28 to 1.0
+	"""
+
+	if env is not None:
+		return env.get_wrapper_attr('model'), env.get_wrapper_attr('data')
+	else:
+		assert model is not None and data is not None, \
+			"If an environment is not specified, both a model and a data structure must be passed."
+		
+		return model, data
 
 ##############
 

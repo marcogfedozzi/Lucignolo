@@ -20,7 +20,7 @@ References:
 
 from gymnasium.envs.mujoco import MujocoEnv
 
-from lucignolo.core.utils import IndexGetter
+from lucignolo.core.utils import IndexGetter, get_model_data
 from numpy.typing import NDArray
 import numpy as np
 from typing import Optional
@@ -78,17 +78,10 @@ def get_actuators(env: gym.Wrapper, actuators_prefix: Optional[str] = None):
 	return np.asarray(actuators)
 
 class _iController:
-	def __init__(self, env: Optional[gym.Env] = None, model: mujoco.MjModel = None, data: mujoco.MjData = None, *args, **kwargs):
-
-		if env is not None:
-			self.model = env.get_wrapper_attr('model')
-			self.data = env.get_wrapper_attr('data')
-		else:
-			assert model is not None and data is not None, \
-				"If an environment is not specified, both a model and a data structure must be passed."
-			
-			self.model = model
-			self.data = data
+	def __init__(self, env: Optional[gym.Env] = None, 
+			  model: mujoco.MjModel = None, data: mujoco.MjData = None, 
+			  *args, **kwargs):
+		self.model, self.data = get_model_data(env, model, data)
 
 
 class Controller(_iController):

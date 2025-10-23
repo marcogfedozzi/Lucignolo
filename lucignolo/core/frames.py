@@ -107,18 +107,10 @@ class StaticFrame(iFrame):
 		setattr(self, '_jac', value)
 
 class Frame(iFrame):
-	def __init__(self, env: Optional[gym.Env] = None, name: str = "", ftype: str = "body", heading: NDArray = np.asarray([0, 0, 1]), model: 
-			  mujoco.MjModel = None, data: mujoco.MjData = None):
+	def __init__(self, env: Optional[gym.Env] = None, name: str = "", ftype: str = "body", heading: NDArray = np.asarray([0, 0, 1]), 
+			  model: mujoco.MjModel = None, data: mujoco.MjData = None):
 
-		if env is not None:
-			self.model = env.get_wrapper_attr('model')
-			self.data = env.get_wrapper_attr('data')
-		else:
-			assert model is not None and data is not None, \
-				"If an environment is not specified, both a model and a data structure must be passed."
-			
-			self.model = model
-			self.data = data
+		self.model, self.data = utils.get_model_data(env, model, data)
 		
 		self.name = name
 		self.ftype = ftype
@@ -161,29 +153,28 @@ class Frame(iFrame):
 		The function can be used to get the xpos, xmat, ... of the frame.
 		"""
 
-		env = self.env
 		ftype = self.ftype
 
 		if ftype == 'site':
 			_get_xpos  = lambda name : self.data.site(name).xpos
 			_get_xmat  = lambda name : self.data.site(name).xmat
 			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(self.data.site(name).xmat.reshape(3,3)).as_quat())
-			_get_jac   = partial(mujoco.mj_jacSite,  m=env.model, d=self.data, site=int(env.model.site(self.name).id))
+			_get_jac   = partial(mujoco.mj_jacSite,  m=self.model, d=self.data, site=int(self.model.site(self.name).id))
 		elif ftype == 'body':
 			_get_xpos  = lambda name : self.data.body(name).xpos
 			_get_xmat  = lambda name : self.data.body(name).xmat
 			_get_xquat = lambda name : self.data.body(name).xquat
-			_get_jac   = partial(mujoco.mj_jacBody, m=env.model, d=self.data, body=int(env.model.body(self.name).id))
+			_get_jac   = partial(mujoco.mj_jacBody, m=self.model, d=self.data, body=int(self.model.body(self.name).id))
 		elif ftype == 'ibody':
 			_get_xpos  = lambda name : self.data.body(name).xipos
 			_get_xmat  = lambda name : self.data.body(name).ximat
 			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(self.data.body(name).ximat.reshape(3,3)).as_quat())
-			_get_jac   = partial(mujoco.mj_jacBodyCom, m=env.model, d=self.data, body=int(env.model.body(self.name).id))
+			_get_jac   = partial(mujoco.mj_jacBodyCom, m=self.model, d=self.data, body=int(self.model.body(self.name).id))
 		elif ftype == 'geom':
 			_get_xpos  = lambda name : self.data.geom(name).xpos
 			_get_xmat  = lambda name : self.data.geom(name).xmat
 			_get_xquat = lambda name : utils.quat_wfirst(R.from_matrix(self.data.geom(name).xmat.reshape(3,3)).as_quat())
-			_get_jac   = partial(mujoco.mj_jacGeom, m=env.model, d=self.data, geom=int(env.model.geom(self.name).id))
+			_get_jac   = partial(mujoco.mj_jacGeom, m=self.model, d=self.data, geom=int(self.model.geom(self.name).id))
 		elif ftype == 'worldbody':
 			_get_xpos  = lambda name : self.data.body(name).xpos
 			_get_xmat  = lambda name : self.data.body(name).xmat
@@ -194,19 +185,20 @@ class Frame(iFrame):
 		return _get_xpos, _get_xmat, _get_xquat, _get_jac
 
 	def __copy__(self):
-		return self.__class__(self.env, self.name, self.ftype, self.k)
+		return self.__class__(model=self.model, data=self.data, name=self.name, ftype=self.ftype, heading=self.k)
 	
 	def static_copy(self):
 		return StaticFrame(xpos=self.xpos, xmat=self.xmat, xquat=self.xquat, jac=self.jac)
 
 class ControllableFrame(Frame):
 	def __init__(self, env: MujocoEnv, name: str, heading: NDArray = np.asarray([0, 0, 1])):
-		self.body_id = env.model.body(name).id
-		self.mocap_id = env.model.body_mocapid[self.body_id]
+		super().__init__(env, name, "body", heading)
+
+		self.body_id = self.model.body(name).id
+		self.mocap_id = self.model.body_mocapid[self.body_id]
 
 		assert self.mocap_id >= 0, f"Body <{name}> is not a mocap body"
 
-		super().__init__(env, name, "body", heading)
 		self.is_static = False
 
 	@property
