@@ -228,9 +228,13 @@ class IndexGetter:
 			joint_id = self.model.actuator(i).trnid[0]
 			joint_name = self.model.joint(joint_id).name
 
-			constraint_id = self.model.equality(joint_name).id # To check if the joint is constrained (e. fixing the initial position)
-			
-			if _filter(joint_name) and not (check_constraints and self.data.eq_active[constraint_id]):
+			try:
+				constraint_id = self.model.equality(joint_name).id # To check if the joint is constrained (e. fixing the initial position)
+			except KeyError:
+				# No constraint found
+				constraint_id = -1
+
+			if _filter(joint_name) and not (constraint_id >= 0 and check_constraints and self.data.eq_active[constraint_id]):
 				joint_names.append(joint_name)
 				joint_ids.append(joint_id)
 

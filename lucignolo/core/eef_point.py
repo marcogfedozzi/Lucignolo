@@ -14,6 +14,7 @@ class EEFPoint():
     def __init__(self, point: Frame):
         self.point = point
         self.fields = []
+        self.current_effect = np.zeros(6)
     
     def add_field(self, field: 'XField'):
         # Avoid importing XField at module import time to prevent circular imports
@@ -37,7 +38,9 @@ class EEFPoint():
 
         for field in self.fields:
             effect += field(self.point, qvel)
+
+        self.current_effect = effect
         return effect
     
     def __repr__(self):
-        return f"EEFPoint({self.point}) || fields: {self.fields}"
+        return f"EEFPoint({self.point}) || fields: {self.fields} || current_effect: {self.current_effect}"
