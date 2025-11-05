@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Simple Inverse Dynamics controller for MuJoCo"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -22,11 +22,21 @@ dependencies = [
     "mujoco==3.3.0",
     "scipy>=1.13.1",
     "gymnasium==1.2.1",
+    "imageio>=2.37",
+    "packaging>=25.0",
 ]
 
 [project.urls]
 Homepage = "https://github.com/marcogfedozzi/Lucignolo"
 
+[project.optional-dependencies]
+mimo = [
+    "mimo",
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["lucignolo*"]
+
+[tool.uv.sources]
+mimo = { git = "https://github.com/marcogfedozzi/MIMo", branch = "v2/main-buildfix" }
