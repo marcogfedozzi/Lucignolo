@@ -112,7 +112,7 @@ class FField(XField):
         xmat    = point.xmat
         k       = point.k
 
-        w_k_eef = xmat @ k
+        w_k_eef = xmat @ k # eef k vector in world coordinates
         d = self.center.xpos - xpos
         d_versor = d / np.linalg.norm(d)
         
