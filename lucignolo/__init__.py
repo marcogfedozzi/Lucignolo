@@ -18,3 +18,4 @@ Limitations: this is not a fully-fledged product, for that look
 from . import controllers, core, fields, trajectory
 
 __all__ = ["controllers", "core", "fields", "trajectory"]
+__version__ = "0.1.0.dev0"

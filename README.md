@@ -165,6 +165,79 @@ Going in a bit more detail, a vector is defined in the EEF's frame (the <em>head
 
 > TODO
 
+## Installation
+
+This package uses [uv](https://docs.astral.sh/uv/) for managing dependencies. It should, ideally, make the install process buttery smooth and fast.
+
+You can refer to [uv](https://docs.astral.sh/uv/) documentation for an in depth look at all its functionalities, below are reported two use cases for it. Both assume you have already installed uv, and you can find the instructions for there [here](https://docs.astral.sh/uv/getting-started/installation/).
+
+The important thing to remember about uv is that you do not need to activate the virtual environment it creates 
+
+### Test Install
+
+If you want to play around with the package and check that things are working.
+
+<details>
+<summary>Test Install</summary>
+
+For this you do not need anything beyond this repo.
+
+1. Clone this repo
+	```bash
+	git clone https://github.com/marcogfedozzi/Lucignolo.git && cd Lucignolo
+	```
+2. Run one of the example scripts with uv
+	```bash
+	uv run --extra mimo examples/MIMo/mimo_ctrl.py
+	```
+
+	At this point uv should be creating a virtual environment, adding the _optional_ MIMo dependencies (needed only for this example),
+	and start running the script.
+	You should see a MuJoCo window with MIMo sitting on the floor and reaching for a point in front of itself.
+
+
+</details>
+
+### Package Install
+
+If you plan to use this as a package in your existing code.
+
+<details>
+<summary>Package Install</summary>
+
+The plan is to make the wheels of this package available on PyPi or similar. For now, however, we are stuck with using the source code of this repo.
+
+1. Clone this repo
+	```bash
+	git clone https://github.com/marcogfedozzi/Lucignolo.git
+	```
+2. Go to your project and install Lucignolo with either
+   1. pip
+		```bash
+		cd <your/path>
+		pip install <path/to/Lucignolo>
+		```
+	2. uv
+		```bash
+		cd <your/path>
+		uv add <path/to/Lucignolo>
+		```
+
+	Test the correct install with
+	
+	```bash
+	python -c "import lucignolo; print(lucignolo.__version__)"
+	```
+	or use
+	
+	```bash
+	uv run python -c "import lucignolo; print(lucignolo.__version__)"
+	```
+	if you are also using a uv environment for your project.
+
+</details>
+
+
 ## Q&A
 
 **Is the name...**  
