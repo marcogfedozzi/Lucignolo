@@ -13,9 +13,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
+
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
 
 dependencies = [
     "numpy==2.0.2",
@@ -31,6 +33,7 @@ Homepage = "https://github.com/marcogfedozzi/Lucignolo"
 
 [project.optional-dependencies]
 mimo = [
+    "ipykernel>=7.1.0",
     "mimo",
 ]
 

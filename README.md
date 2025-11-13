@@ -89,17 +89,63 @@ The controllers developed in this package need 3 ingredients to make the ~~magic
 
 Here is a code snippet that shows all the necessary steps to from 0 to controller-ready:
 
+<details>
+<summary>Control Minimal Example</summary>
+
 ```python
 import lucignolo as lc
-	
+
+## Environment ##
+
 env = gym.make(...) # get your environment
 
 controlled_body = "hand" 
 
-target = lc.core.frames.ControllableFrame(env, "target:"+controlled_body)
+## Target ##
 
+target = lc.core.frames.ControllableFrame(env, "target:"+controlled_body)
+target.xpos = np.array([0.2, 0.0, 0.3])
+
+## End Effector ##
+
+eef_frame = lc.core.frames.Frame(env, "eef:"+controlled_body, "site", heading=np.array([0,0,1]))
+
+eef = lc.core.eef_point.EEFPoint(eef_frame)
+
+## Fields ##
+
+attractive_field = lc.fields.get_field(
+	center=target,
+	field_type="translation",
+	params={
+		"k": 800.0,
+		"pow": 1.0,
+		"max": 0.1,
+	}
+)
+
+eef.add_field(alignment_field)
+
+## Controller ##
+subtree_type = controlled_body if "head" in controlled_body or "eye" in controlled_body else controlled_body.replace("hand", "arm")
+
+controller = lc.controllers.IDController(env, eef, subtree_type)
+
+## Control Loop ##
+
+for step in range(max_steps):
+		action = controller.step()
+		obs, reward, done, trunc, info = env.step(action)
+		render(env)
+
+		if done or trunc:
+				env.reset()
 
 ```
+</details>
+
+Find more complete scripts in the [example](./examples/) folder. 
+
 
 ### Notes and Definitions
 <details>
